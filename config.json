@@ -1,6 +1,7 @@
 {
 	"client": {
 		"dir": "../client",
+		"pages": "pages",
 		"public": "dist"
 	},
 	"server": {
