@@ -1,0 +1,8 @@
+# Allow users to create custom issues
+blank_issues_enabled: false
+
+# Additional contact links
+contact_links:
+  - name: Kerig Support
+    url: https://support.kerig.ee
+    about: You can get support here.

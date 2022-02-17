@@ -1,0 +1,3 @@
+#! /bin/bash
+
+printf "\nConfiguration complete.\n" && exit 0

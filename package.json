@@ -1,0 +1,33 @@
+{
+	"name": "tmpl",
+	"version": "0.0.0-alpha.0",
+	"description": "A template for Node.js HTTP servers.",
+	"main": "index.js",
+	"scripts": {
+		"start": "nodemon index.js --ignore '*.json'",
+		"test": "echo \"No testing is available for this repository.\" && exit 0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/kerig-it/node-tmpl.git"
+	},
+	"keywords": [
+		"template",
+		"server",
+		"nodejs"
+	],
+	"author": "kerig",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/kerig-it/node-tmpl/issues"
+	},
+	"homepage": "https://github.com/kerig-it/node-tmpl#readme",
+	"dependencies": {
+		"fs": "^0.0.1-security",
+		"http": "^0.0.1-security",
+		"nodemon": "^2.0.15",
+		"path": "^0.12.7",
+		"sanitiser": "^0.0.0",
+		"url": "^0.11.0"
+	}
+}
