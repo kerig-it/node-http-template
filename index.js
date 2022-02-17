@@ -79,7 +79,6 @@ const main = () => {
 				let index = path.join(
 					config.client.dir, // Client directory
 					config.client.public, // Client public path
-					config.client.pages, // Client pages, if applicable
 
 					// Sanitised requested path
 					sanitiser(
