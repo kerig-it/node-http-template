@@ -35,53 +35,95 @@ const main = () => {
 		// Define query variables.
 		let
 			q = url.parse(request.url, true),
-			p = q.pathname.replace(/\/?$/, '');
+			p = q.pathname === '/' ? '/' : q.pathname.replace(/\/?$/, '');
 
-		// Define a possible path name.
-		let pathname = path.join(
-			config.client.dir, // Client directory
-			config.client.public, // Client public path
+		// Is the requested method 'GET'?
+		if (request.method === 'GET') {
+		
+			// Define a possible path name.
+			let pathname = path.join(
+				config.client.dir, // Client directory
+				config.client.public, // Client public path
 
-			// Sanitised requested path
-			sanitiser(
-				p.replace(/^\/*/, '')
-			)
-		);
+				// Sanitised requested path
+				sanitiser(
+					p.replace(/^\/*/, '')
+				)
+			);
 
-		// Does the requested path exist?
-		if (fs.existsSync(pathname)) {
-
-			// Resolve the path name.
-			pathname = path.resolve(pathname);
-
-			// Is the requested path a file?
-			if (fs.statSync(pathname).isFile()) {
-				// Read the requested file.
+			// Does the possible path name exist and is it a file?
+			if (
+				fs.existsSync(pathname) &&
+				fs.statSync(pathname).isFile()
+			) {
+				// Read the file.
 				fs.readFile(pathname, (error, data) => {
 
-					// Error handling
+					// Error handling.
 					if (error) {
-						// End the response with 500.
+						// End the reponse with 500.
 						response.statusCode = 500;
-						return response.end('500: Internal Server Error');
+						return reponse.end('500: Internal Server Error');
 					}
 
-					// Return `data` as a string.
+					// End the reponse with data.
 					response.statusCode = 200;
-					return response.end(data.toString());
+					return response.end(data);
 				});
 			}
 
-			// Is the requested path a directory?
-			else if (fs.statSync(pathname).isDirectory()) {
+			// Is the path name not a direct specification of a file?
+			else {
 
-				// Define a possible `index.html` inside the directory.
-				let index = path.join(pathname, 'index.html');
+				// Define a possible `index.html` file.
+				let index = path.join(
+					config.client.dir, // Client directory
+					config.client.public, // Client public path
+					config.client.pages, // Client pages, if applicable
 
-				// Does the possible `index.html` file exist?
+					// Sanitised requested path
+					sanitiser(
+						p.replace(/^\/*/, '')
+					),
+
+					// `index.html` file
+					'index.html'
+				);
+
+				// Define possible HTML file for supplied path name.
+				let html = path.join(
+					config.client.dir, // Client directory
+					config.client.public, // Client public path
+					config.client.pages, // Client pages, if applicable
+
+					// Sanitised requested path (as HTML)
+					sanitiser(
+						p.replace(/^\/*/, '')
+					) + '.html'
+				);
+
+				// Reassign index/HTML path names to Boolean values
+				// based off of their existence in the file system,
+				// giving the `index.html` file priority.
 				if (fs.existsSync(index)) {
-					// Read the `index.html` file.
-					fs.readFile(index, (error, data) => {
+					html = false;
+				}
+				else if (fs.existsSync(html)) {
+					index = false;
+				}
+				else {
+					html = false;
+					index = false;
+				}
+
+				// Define a pathname or a Boolean value from the
+				// `index.html` or HTML file, if applicable.
+				let pathname = index || html;
+
+				// Is there an `index.html` or HTML file?
+				if (pathname) {
+					// Read the `index.html` or HTML file.
+					fs.readFile(pathname, (error, data) => {
 
 						// Error handling
 						if (error) {
@@ -90,23 +132,31 @@ const main = () => {
 							return response.end('500: Internal Server Error');
 						}
 
-						// End the response the `index.html` file.
+						// End the response with data.
 						response.writeHead(
 							200,
-							{ 'Content-Type': 'text/html' }
+							{
+								'Content-Type': 'text/html'
+							}
 						);
 						response.write(data.toString());
 						return response.end();
 					});
 				}
+
+				// Do none of the files exist?
+				else {
+					// End the response with 404.
+					response.statusCode = 404;
+					return response.end('404: Not Found');
+				}
 			}
 		}
 
-		// Does the requested path not exist?
+		// Is the requested method not one of the above?
 		else {
-			// End the response with 404.
-			response.statusCode = 404;
-			return response.end('404: Not Found');
+			// End the response.
+			return response.end();
 		}
 	});
 
