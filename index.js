@@ -1,5 +1,5 @@
 /*
- * node-tmpl—A template for Node.js HTTP servers.
+ * node-tmpl—A template repository for Node.js HTTP servers.
  *
  * Refer to the README in this repository's root for more
  * information.
