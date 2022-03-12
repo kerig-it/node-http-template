@@ -47,7 +47,7 @@ const main = () => {
 			query = url.parse(request.url, true),
 			p = query.pathname === '/' ? '/' : query.pathname.replace(/\/?$/, '');
 
-		// Is the requested method 'GET'?
+		// Is the requested method GET?
 		if (request.method === 'GET') {
 		
 			// Define a possible path name.
@@ -172,11 +172,10 @@ const main = () => {
 	// Initiate the HTTP server.
 	server.listen(
 		config.server.port, // Port to listen on
-		config.server.host, // Host to host on
 		() => {
 			// Print success message.
 			console.clear();
-			console.log(`HTTP server running at http://${config.server.host}:${config.server.port}\n`);
+			console.log(`HTTP server running at http://127.0.0.1:${config.server.port}\n`);
 		}
 	);
 };
