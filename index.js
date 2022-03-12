@@ -1,10 +1,15 @@
-// Entry point of this Node application.
-//
-// Refer to the README for more information.
-//
-// GitHub: https://github.com/kerig-it/node-tmpl
+/*
+ * node-tmpl—A template for Node.js HTTP servers.
+ *
+ * Refer to the README in this repository's root for more
+ * information.
+ *
+ * GitHub: https://github.com/kerig-it/node-tmpl
+ *
+ * Made with ❤️ by Kerig.
+*/
 
-// Node modules
+// Modules, packages and libraries
 const
 	fs = require('fs'),
 	http = require('http'),
@@ -12,17 +17,22 @@ const
 	sanitiser = require('sanitiser'),
 	url = require('url');
 
-// Configuration variable
-let config;
+let config; // Configuration object --> ./config.json
 
 try {
-	// Read and parse contents from `config.json` to `config`.
+	// Read and parse the configuration object.
 	config = JSON.parse(fs.readFileSync(
-		'config.json'
+		path.join(__dirname, 'config.json')
 	).toString());
+
+	// Check if the client directory exists.
+	if (!fs.existsSync(path.resolve(config.client.dir))) {
+		// If not, throw an error.
+		throw new Error('The client directory is seemingly devoid.');
+	}
 }
 catch (error) {
-	// If there was an error, throw it.
+	// Crash the server.
 	throw error;
 }
 
@@ -30,12 +40,12 @@ catch (error) {
 const main = () => {
 
 	// Define an HTTP server.
-	let srv = http.createServer((request, response) => {
+	let server = http.createServer((request, response) => {
 
-		// Define query variables.
+		// Define some query variables.
 		let
-			q = url.parse(request.url, true),
-			p = q.pathname === '/' ? '/' : q.pathname.replace(/\/?$/, '');
+			query = url.parse(request.url, true),
+			p = query.pathname === '/' ? '/' : query.pathname.replace(/\/?$/, '');
 
 		// Is the requested method 'GET'?
 		if (request.method === 'GET') {
@@ -93,7 +103,6 @@ const main = () => {
 				let html = path.join(
 					config.client.dir, // Client directory
 					config.client.public, // Client public path
-					config.client.pages, // Client pages, if applicable
 
 					// Sanitised requested path (as HTML)
 					sanitiser(
@@ -121,7 +130,7 @@ const main = () => {
 
 				// Is there an `index.html` or HTML file?
 				if (pathname) {
-					// Read the `index.html` or HTML file.
+					// Read the file.
 					fs.readFile(pathname, (error, data) => {
 
 						// Error handling
@@ -133,10 +142,11 @@ const main = () => {
 
 						// End the response with data.
 						response.writeHead(
+							// Status code
 							200,
-							{
-								'Content-Type': 'text/html'
-							}
+
+							// Headers
+							{ 'Content-Type': 'text/html' }
 						);
 						response.write(data.toString());
 						return response.end();
@@ -152,7 +162,7 @@ const main = () => {
 			}
 		}
 
-		// Is the requested method not one of the above?
+		// Different request method?
 		else {
 			// End the response.
 			return response.end();
@@ -160,7 +170,7 @@ const main = () => {
 	});
 
 	// Initiate the HTTP server.
-	srv.listen(
+	server.listen(
 		config.server.port, // Port to listen on
 		config.server.host, // Host to host on
 		() => {
@@ -171,9 +181,10 @@ const main = () => {
 	);
 };
 
-try {
+try /*one's luck*/ {
 	main();
 }
 catch (error) {
+	// Crash the server.
 	throw error;
 }
