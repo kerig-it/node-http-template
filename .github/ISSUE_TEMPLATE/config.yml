@@ -1,4 +1,4 @@
-# Allow users to create custom issues
+# Don't allow users to create custom issues
 blank_issues_enabled: false
 
 # Additional contact links
