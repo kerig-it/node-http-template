@@ -7,7 +7,7 @@ SHELL [ "/bin/bash", "-c" ]
 WORKDIR /var/www/server
 
 COPY package*.json ./
-RUN npm install; npm install -g nodemon
+RUN npm install
 
 COPY . .
 RUN chmod +x configure && ./configure
