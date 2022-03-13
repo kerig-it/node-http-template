@@ -169,13 +169,24 @@ const main = () => {
 		}
 	});
 
+	// Declare a default port.
+	let port = 80;
+
+	// Environment/default port check
+	if (config.environment === 'development') {
+		port = config.server.dev.port;
+	}
+	else if (config.environment === 'production') {
+		port = config.server.port;
+	}
+
 	// Initiate the HTTP server.
 	server.listen(
-		config.server.port, // Port to listen on
+		port, // Port to listen on
 		() => {
 			// Print success message.
 			console.clear();
-			console.log(`HTTP server running at http://127.0.0.1:${config.server.port}\n`);
+			console.log(`HTTP server running at http://127.0.0.1:${port}\n`);
 		}
 	);
 };
