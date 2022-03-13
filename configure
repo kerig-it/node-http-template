@@ -1,3 +1,5 @@
 #! /bin/bash
 
+npm install -g nodemon; npm install
+
 printf "\nConfiguration complete.\n" && exit 0
