@@ -1,6 +1,6 @@
 # syntax=dockerfile/dockerfile:1
 
-FROM node:17.7.1
+FROM node:latest
 
 SHELL [ "/bin/bash", "-c" ]
 
