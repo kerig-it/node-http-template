@@ -56,9 +56,7 @@ const main = () => {
 				config.client.public, // Client public path
 
 				// Sanitised requested path
-				sanitiser(
-					p.replace(/^\/*/, '')
-				)
+				sanitiser(p).replace(/^\/*/, '')
 			);
 
 			// Does the possible path name exist and is it a file?
@@ -91,9 +89,7 @@ const main = () => {
 					config.client.public, // Client public path
 
 					// Sanitised requested path
-					sanitiser(
-						p.replace(/^\/*/, '')
-					),
+					sanitiser(p).replace(/^\/*/, ''),
 
 					// `index.html` file
 					'index.html'
@@ -105,9 +101,7 @@ const main = () => {
 					config.client.public, // Client public path
 
 					// Sanitised requested path (as HTML)
-					sanitiser(
-						p.replace(/^\/*/, '')
-					) + '.html'
+					sanitiser(p).replace(/^\/*/, '') + '.html'
 				);
 
 				// Reassign index/HTML path names to Boolean values
