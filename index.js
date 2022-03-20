@@ -17,18 +17,28 @@ const
 	sanitiser = require('sanitiser'),
 	url = require('url');
 
-let config; // Configuration object --> ./config.json
+let
+	client, // (Path name)
+	config; // Configuration object --> ./config.json
 
 try {
-	// Read and parse the configuration object.
 	config = JSON.parse(fs.readFileSync(
 		path.join(__dirname, 'config.json')
 	).toString());
 
-	// Check if the client directory exists.
-	if (!fs.existsSync(path.resolve(config.client.dir))) {
-		// If not, throw an error.
-		throw new Error('The client directory is seemingly devoid.');
+	// Is there a client?
+	if (config.client) {
+		// Resolve the client directory.
+		client = path.resolve(config.client.dir);
+
+		// Check if the client (directory?) does *not* exists.
+		if (!(
+			fs.existsSync(client) &&
+			fs.statSync(client).isDirectory()
+		)) {
+			// If so, raise an error.
+			throw new Error('The client directory is seemingly devoid.');
+		}
 	}
 }
 catch (error) {
@@ -41,34 +51,32 @@ const main = () => {
 
 	// Define an HTTP server.
 	let server = http.createServer((request, response) => {
+		let query = url.parse(request.url, true);
 
-		// Define some query variables.
-		let
-			query = url.parse(request.url, true),
-			p = query.pathname === '/' ? '/' : query.pathname.replace(/\/?$/, '');
+		// Remove trailing slashes from the path name.
+		query.pathname = query.pathname.replace(/^(.+)\/$/, '$1');
 
-		// Is the requested method GET?
 		if (request.method === 'GET') {
 		
-			// Define a possible path name.
+			// Compose an imaginary path name from the supplied query.
 			let pathname = path.join(
-				config.client.dir, // Client directory
-				config.client.public, // Client public path
+				// Path name to client directory
+				client,
 
 				// Sanitised requested path
-				sanitiser(p).replace(/^\/*/, '')
+				sanitiser(query.pathname).replace(/^\/*/, '')
 			);
 
-			// Does the possible path name exist and is it a file?
+			// Check if the path name to the (file?) *exists*.
 			if (
 				fs.existsSync(pathname) &&
 				fs.statSync(pathname).isFile()
 			) {
-				// Read the file.
 				fs.readFile(pathname, (error, data) => {
-
-					// Error handling.
 					if (error) {
+						// Log the error.
+						console.error(error);
+
 						// End the reponse with 500.
 						response.statusCode = 500;
 						return reponse.end('500: Internal Server Error');
@@ -84,25 +92,26 @@ const main = () => {
 			else {
 
 				// Define a possible `index.html` file.
-				let index = path.join(
-					config.client.dir, // Client directory
-					config.client.public, // Client public path
+				let index = path.join(pathname, 'index.html');
 
-					// Sanitised requested path
-					sanitiser(p).replace(/^\/*/, ''),
+				// Declare a possible HTML file.
+				let html;
 
-					// `index.html` file
-					'index.html'
-				);
+				// Define a list of relevant extensions.
+				let extensions = [ 'html', 'htm', 'xhtml', 'xhtm' ];
 
-				// Define possible HTML file for supplied path name.
-				let html = path.join(
-					config.client.dir, // Client directory
-					config.client.public, // Client public path
+				for (extension of extensions) {
+					// Define a possible variant.
+					let variant = pathname.replace(/\/$/, '') + '.' + extension;
 
-					// Sanitised requested path (as HTML)
-					sanitiser(p).replace(/^\/*/, '') + '.html'
-				);
+					// Check variant's existence.
+					if (fs.existsSync(variant)) {
+						// Assign the variant to `html`.
+						html = variant;
+						extensions = extension;
+						break;
+					}
+				}
 
 				// Reassign index/HTML path names to Boolean values
 				// based off of their existence in the file system,
@@ -110,7 +119,7 @@ const main = () => {
 				if (fs.existsSync(index)) {
 					html = false;
 				}
-				else if (fs.existsSync(html)) {
+				else if (html) {
 					index = false;
 				}
 				else {
@@ -120,34 +129,32 @@ const main = () => {
 
 				// Define a pathname or a Boolean value from the
 				// `index.html` or HTML file, if applicable.
-				let pathname = index || html;
+				let targetFile = index || html;
 
 				// Is there an `index.html` or HTML file?
-				if (pathname) {
+				if (targetFile) {
 					// Read the file.
-					fs.readFile(pathname, (error, data) => {
-
-						// Error handling
+					fs.readFile(targetFile, (error, data) => {
 						if (error) {
+							// Log the error.
+							console.error(error);
+
 							// End the response with 500.
 							response.statusCode = 500;
 							return response.end('500: Internal Server Error');
 						}
 
 						// End the response with data.
-						response.writeHead(
-							// Status code
-							200,
-
-							// Headers
-							{ 'Content-Type': 'text/html' }
+						response.statusCode = 200;
+						response.setHeader(
+							'Content-Type',
+							extensions.at(0) === 'x' ? 'application/xhtml+xml' : 'text/html'
 						);
-						response.write(data.toString());
-						return response.end();
+						return response.end(data.toString());
 					});
 				}
 
-				// Do none of the files exist?
+				// Was the requested query some gibberish nonsense?
 				else {
 					// End the response with 404.
 					response.statusCode = 404;
