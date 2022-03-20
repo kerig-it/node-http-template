@@ -1,7 +1,6 @@
 {
 	"client": {
-		"dir": "../client",
-		"public": "dist"
+		"dir": "../webpack-tmpl/dist"
 	},
 	"environment": "development",
 	"server": {
