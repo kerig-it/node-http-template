@@ -4,9 +4,9 @@
 	},
 	"environment": "development",
 	"server": {
-		"dev": {
-			"port": 80
-		},
 		"port": 80
+	},
+	"devServer": {
+		"port": 8080
 	}
 }
