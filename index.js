@@ -163,27 +163,33 @@ const main = () => {
 			}
 		}
 
+		// Methods that shouldn't receive 405.
+		else if ([ 'HEAD' ].includes(request.method)) {
+			// End the response with 200.
+			response.statusCode = 200;
+			return response.end('200: OK');
+		}
+
 		// Different request method?
 		else {
-			// End the response.
-			return response.end();
+			// End the response with 405.
+			response.statusCode = 405;
+			return response.end('405: Method Not Allowed');
 		}
 	});
 
-	// Declare a default port.
-	let port = 80;
+	// Define an object literal with ports.
+	let ports = {
+		development: config.devServer?.port,
+		production: config.server?.port
+	};
 
-	// Environment/default port check
-	if (config.environment === 'development') {
-		port = config.server.dev.port;
-	}
-	else if (config.environment === 'production') {
-		port = config.server.port;
-	}
+	// Make up a port to use.
+	let port = ports[config.environment] ?? 80;
 
 	// Initiate the HTTP server.
 	server.listen(
-		port, // Port to listen on
+		port,
 		() => {
 			// Print success message.
 			console.clear();
