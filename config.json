@@ -1,12 +1,23 @@
 {
 	"client": {
-		"dir": "../webpack-tmpl/dist"
+		"dir": "../webpack-template/dist"
 	},
-	"environment": "development",
-	"server": {
-		"port": 80
+	"cors": {
+		"domains": [
+			"127.0.0.1",
+			"localhost"
+		]
 	},
 	"devServer": {
 		"port": 8080
+	},
+	"environment": "development",
+	"methods": [
+		"GET",
+		"HEAD",
+		"OPTIONS"
+	],
+	"server": {
+		"port": 80
 	}
 }
