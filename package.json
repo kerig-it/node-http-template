@@ -1,15 +1,15 @@
 {
-	"name": "tmpl",
+	"name": "http-template",
 	"version": "0.0.0-alpha.0",
 	"description": "A template repository for Node.js HTTP servers.",
 	"main": "./index.js",
 	"scripts": {
 		"start": "nodemon index.js --ignore '*.json'",
-		"test": "echo \"No testing is available for this repository.\" && exit 0"
+		"test": "echo \"No testing is available for this repository.\""
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/kerig-it/node-tmpl.git"
+		"url": "git+https://github.com/kerig-it/node-http-template.git"
 	},
 	"keywords": [
 		"template",
@@ -19,9 +19,9 @@
 	"author": "kerig",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/kerig-it/node-tmpl/issues"
+		"url": "https://github.com/kerig-it/node-http-template/issues"
 	},
-	"homepage": "https://github.com/kerig-it/node-tmpl#readme",
+	"homepage": "https://github.com/kerig-it/node-http-template#readme",
 	"dependencies": {
 		"fs": "^0.0.1-security",
 		"http": "^0.0.1-security",
