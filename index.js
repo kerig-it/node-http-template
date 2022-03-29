@@ -1,10 +1,10 @@
 /*
- * node-tmpl—A template repository for Node.js HTTP servers.
+ * node-http—A template repository for Node.js HTTP servers.
  *
  * Refer to the README in this repository's root for more
  * information.
  *
- * GitHub: https://github.com/kerig-it/node-tmpl
+ * GitHub: https://github.com/kerig-it/node-http
  *
  * Made with ❤️ by Kerig.
 */
@@ -17,9 +17,7 @@ const
 	sanitiser = require('sanitiser'),
 	url = require('url');
 
-let
-	client, // (Path name)
-	config; // Configuration object --> ./config.json
+let config; // Configuration object --> ./config.json
 
 try {
 	config = JSON.parse(fs.readFileSync(
@@ -29,7 +27,7 @@ try {
 	// Is there a client?
 	if (config.client) {
 		// Resolve the client directory.
-		client = path.resolve(config.client.dir);
+		let client = path.resolve(config.client.dir);
 
 		// Check if the client (directory?) does *not* exists.
 		if (!(
@@ -51,129 +49,138 @@ const main = () => {
 
 	// Define an HTTP server.
 	let server = http.createServer((request, response) => {
-		let query = url.parse(request.url, true);
+
+		// Define a Boolean value of whether the HEAD method is used.
+		let head = request.method === 'HEAD';
+
+		// Declare a query.
+		let query;
+
+		try {
+			query = url.parse(request.url, true, false);
+		}
+		catch (error) {
+			// End the response with 400.
+			response.statusCode = 400;
+			if (!head) response.write('400: Bad Request');
+			return response.end();
+		}
 
 		// Remove trailing slashes from the path name.
 		query.pathname = query.pathname.replace(/^(.+)\/$/, '$1');
 
-		if (request.method === 'GET') {
-		
-			// Compose an imaginary path name from the supplied query.
-			let pathname = path.join(
-				// Path name to client directory
-				client,
-
-				// Sanitised requested path
-				sanitiser(query.pathname).replace(/^\/*/, '')
-			);
-
-			// Check if the path name to the (file?) *exists*.
-			if (
-				fs.existsSync(pathname) &&
-				fs.statSync(pathname).isFile()
-			) {
-				fs.readFile(pathname, (error, data) => {
-					if (error) {
-						// Log the error.
-						console.error(error);
-
-						// End the reponse with 500.
-						response.statusCode = 500;
-						return reponse.end('500: Internal Server Error');
-					}
-
-					// End the reponse with data.
-					response.statusCode = 200;
-					return response.end(data);
-				});
+		// CORS
+		if (request.headers.origin) {
+			if (config.cors.domains.includes(
+				request.headers.origin
+					.toString()
+					.replace(/^https?:\/\//, '')
+			)) {
+				// Set CORS header.
+				response.setHeader(
+					'Access-Control-Allow-Origin',
+					request.headers.origin
+				);
 			}
+		}
 
-			// Is the path name not a direct specification of a file?
-			else {
+		// Is the request method supported?
+		if (config.methods.includes(request.method)) {
 
-				// Define a possible `index.html` file.
-				let index = path.join(pathname, 'index.html');
+			// Request handling
+			if ([ 'GET', 'HEAD' ].includes(request.method)) {
+				
+				// Declare a path name that will be a composed
+				// imaginary path name from the supplied query.
+				let pathname;
 
-				// Declare a possible HTML file.
-				let html;
+				try {
+					pathname = path.join(
+						// Path name to client directory
+						config.client.dir,
 
-				// Define a list of relevant extensions.
-				let extensions = [ 'html', 'htm', 'xhtml', 'xhtm' ];
-
-				for (extension of extensions) {
-					// Define a possible variant.
-					let variant = pathname.replace(/\/$/, '') + '.' + extension;
-
-					// Check variant's existence.
-					if (fs.existsSync(variant)) {
-						// Assign the variant to `html`.
-						html = variant;
-						extensions = extension;
-						break;
-					}
+						// Sanitised requested path
+						sanitiser(query.pathname).replace(/^\/*/, '')
+					);
+				}
+				catch (error) {
+					// End the response with 500.
+					response.statusCode = 500;
+					if (!head) response.write('500: Internal Server Error');
+					response.end();
 				}
 
-				// Reassign index/HTML path names to Boolean values
-				// based off of their existence in the file system,
-				// giving the `index.html` file priority.
-				if (fs.existsSync(index)) {
-					html = false;
-				}
-				else if (html) {
-					index = false;
-				}
-				else {
-					html = false;
-					index = false;
-				}
-
-				// Define a pathname or a Boolean value from the
-				// `index.html` or HTML file, if applicable.
-				let targetFile = index || html;
-
-				// Is there an `index.html` or HTML file?
-				if (targetFile) {
-					// Read the file.
-					fs.readFile(targetFile, (error, data) => {
+				// Does the path name to the (file?) exists?
+				if (
+					fs.existsSync(pathname) &&
+					fs.statSync(pathname).isFile()
+				) {
+					// Read the file from the file system.
+					return fs.readFile(pathname, (error, data) => {
 						if (error) {
-							// Log the error.
-							console.error(error);
-
-							// End the response with 500.
+							// End the reponse with 500.
 							response.statusCode = 500;
-							return response.end('500: Internal Server Error');
+							if (!head) response.write('500: Internal Server Error');
+							return reponse.end();
 						}
 
-						// End the response with data.
+						// End the reponse with data.
 						response.statusCode = 200;
-						response.setHeader(
-							'Content-Type',
-							extensions.at(0) === 'x' ? 'application/xhtml+xml' : 'text/html'
-						);
-						return response.end(data.toString());
+						response.setHeader('Content-Length', data.length || 0);
+						if (!head) response.write(data);
+						response.end();
 					});
 				}
 
-				// Was the requested query some gibberish nonsense?
+				// Not a direct specification of a file?
 				else {
-					// End the response with 404.
-					response.statusCode = 404;
-					return response.end('404: Not Found');
+
+					// Define a possible index.html file.
+					let index = path.join(pathname, 'index.html');
+
+					// Does the index file exist?
+					if (fs.existsSync(index)) {
+						// Read the index file.
+						return fs.readFile(index, (error, data) => {
+							if (error) {
+								// End the response with 500.
+								response.statusCode = 500;
+								if (!head) response.write('500: Internal Server Error');
+								return response.end();
+							}
+
+							// End the response with data.
+							response.statusCode = 200;
+							response.setHeader('Content-Type', 'text/html');
+							response.setHeader('Content-Length', data.length || 0);
+							if (!head) response.write(data);
+							response.end();
+						});
+					}
+
+					// Was the requested query some gibberish nonsense?
+					else {
+						// End the response with 404.
+						response.statusCode = 404;
+						if (!head) response.write('404: Not Found');
+						return response.end();
+					}
 				}
+			}
+
+			else if (request.method === 'OPTIONS') {
+				// End the response with 200.
+				response.statusCode = 200;
+				response.setHeader('Allow', config.methods.join(', '));
+				return response.end('200: OK');
 			}
 		}
 
-		// Methods that shouldn't receive 405.
-		else if ([ 'HEAD' ].includes(request.method)) {
-			// End the response with 200.
-			response.statusCode = 200;
-			return response.end('200: OK');
-		}
-
-		// Different request method?
+		// Unsupported request method?
 		else {
 			// End the response with 405.
 			response.statusCode = 405;
+			response.setHeader('Allow', config.methods.join(', '));
 			return response.end('405: Method Not Allowed');
 		}
 	});
@@ -188,14 +195,11 @@ const main = () => {
 	let port = ports[config.environment] ?? 80;
 
 	// Initiate the HTTP server.
-	server.listen(
-		port,
-		() => {
-			// Print success message.
-			console.clear();
-			console.log(`HTTP server running at http://127.0.0.1:${port}\n`);
-		}
-	);
+	server.listen(port, () => {
+		// Print success message.
+		console.clear();
+		console.log(`HTTP server running at http://127.0.0.1:${port}\n`);
+	});
 };
 
 try /*one's luck*/ {
