@@ -1,10 +1,10 @@
 /*
- * node-http—A template repository for Node.js HTTP servers.
+ * node-http-template—A template repository for Node.js HTTP servers.
  *
  * Refer to the README in this repository's root for more
  * information.
  *
- * GitHub: https://github.com/kerig-it/node-http
+ * GitHub: https://github.com/kerig-it/node-http-template
  *
  * Made with ❤️ by Kerig.
 */
@@ -20,6 +20,7 @@ const
 let config; // Configuration object --> ./config.json
 
 try {
+	// Parse the configuration object.
 	config = JSON.parse(fs.readFileSync(
 		path.join(__dirname, 'config.json')
 	).toString());
@@ -89,7 +90,7 @@ const main = () => {
 
 			// Request handling
 			if ([ 'GET', 'HEAD' ].includes(request.method)) {
-				
+
 				// Declare a path name that will be a composed
 				// imaginary path name from the supplied query.
 				let pathname;
@@ -183,6 +184,18 @@ const main = () => {
 			response.setHeader('Allow', config.methods.join(', '));
 			return response.end('405: Method Not Allowed');
 		}
+
+		// Set a response timeout to prevent infinite response times
+		// due to the server not handling a particular request method
+		// and/or something else.
+		response.setTimeout(config.timeout, () => {
+			// End the response with 408. This has rather yet to be
+			// reviewed, as the status "408 Request Timeout" is not
+			// an appropriate status for this occasion.
+			response.statusCode = 408;
+			if (!head) response.write('408: Request Timeout');
+			response.end();
+		});
 	});
 
 	// Define an object literal with ports.
