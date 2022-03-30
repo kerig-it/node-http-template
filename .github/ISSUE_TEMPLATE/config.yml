@@ -1,5 +1,5 @@
 # Don't allow users to create custom issues
-blank_issues_enabled: false
+blank_issues_enabled: true
 
 # Additional contact links
 contact_links:
