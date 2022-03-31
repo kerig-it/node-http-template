@@ -63,7 +63,10 @@ const main = () => {
 		catch (error) {
 			// End the response with 400.
 			response.statusCode = 400;
-			if (!head) response.write('400: Bad Request');
+			response.statusMessage = 'Bad Request';
+			if (!head) {
+				response.write('400: Bad Request');
+			}
 			return response.end();
 		}
 
@@ -107,8 +110,11 @@ const main = () => {
 				catch (error) {
 					// End the response with 500.
 					response.statusCode = 500;
-					if (!head) response.write('500: Internal Server Error');
-					response.end();
+					response.statusMessage = 'Internal Server Error';
+					if (!head) {
+						response.write('500: Internal Server Error');
+					}
+					return response.end();
 				}
 
 				// Does the path name to the (file?) exists?
@@ -121,14 +127,20 @@ const main = () => {
 						if (error) {
 							// End the reponse with 500.
 							response.statusCode = 500;
-							if (!head) response.write('500: Internal Server Error');
-							return reponse.end();
+							response.statusMessage = 'Internal Server Error';
+							if (!head) {
+								response.write('500: Internal Server Error');
+							}
+							return response.end();
 						}
 
 						// End the reponse with data.
 						response.statusCode = 200;
-						response.setHeader('Content-Length', data.length || 0);
-						if (!head) response.write(data);
+						response.statusMessage = 'OK';
+						response.setHeader('Content-Length', data.length);
+						if (!head) {
+							response.write(data);
+						}
 						response.end();
 					});
 				}
@@ -146,15 +158,21 @@ const main = () => {
 							if (error) {
 								// End the response with 500.
 								response.statusCode = 500;
-								if (!head) response.write('500: Internal Server Error');
+								response.statusMessage = 'Internal Server Error';
+								if (!head) {
+									response.write('500: Internal Server Error');
+								}
 								return response.end();
 							}
 
 							// End the response with data.
 							response.statusCode = 200;
+							response.statusMessage = 'OK';
 							response.setHeader('Content-Type', 'text/html');
-							response.setHeader('Content-Length', data.length || 0);
-							if (!head) response.write(data);
+							response.setHeader('Content-Length', data.length);
+							if (!head) {
+								response.write(data);
+							}
 							response.end();
 						});
 					}
@@ -163,7 +181,10 @@ const main = () => {
 					else {
 						// End the response with 404.
 						response.statusCode = 404;
-						if (!head) response.write('404: Not Found');
+						response.statusMessage = 'Not Found';
+						if (!head) {
+							response.write('404: Not Found');
+						}
 						return response.end();
 					}
 				}
@@ -172,6 +193,7 @@ const main = () => {
 			else if (request.method === 'OPTIONS') {
 				// End the response with 200.
 				response.statusCode = 200;
+				response.statusMessage = 'OK';
 				response.setHeader('Allow', config.methods.join(', '));
 				return response.end('200: OK');
 			}
@@ -179,21 +201,31 @@ const main = () => {
 
 		// Unsupported request method?
 		else {
-			// End the response with 405.
-			response.statusCode = 405;
-			response.setHeader('Allow', config.methods.join(', '));
-			return response.end('405: Method Not Allowed');
+			// End the response with 501.
+			response.statusCode = 501;
+			response.statusMessage = 'Not Implemented';
+			return response.end('501: Not Implemented');
 		}
+
+		// Define an object literal with timeouts.
+		let timeouts = {
+			development: config.devServer.timeout,
+			production: conifg.server.timeout
+		};
+
+		// Make up a timeout to use.
+		let timeout = timeouts[config.environment] ?? 60000;
 
 		// Set a response timeout to prevent infinite response times
 		// due to the server not handling a particular request method
 		// and/or something else.
-		response.setTimeout(config.timeout, () => {
-			// End the response with 408. This has rather yet to be
-			// reviewed, as the status "408 Request Timeout" is not
-			// an appropriate status for this occasion.
-			response.statusCode = 408;
-			if (!head) response.write('408: Request Timeout');
+		response.setTimeout(timeout, () => {
+			// End the response with 500.
+			response.statusCode = 500;
+			response.statusMessage = 'Internal Server Error';
+			if (!head) {
+				response.write('500: Internal Server Error');
+			}
 			response.end();
 		});
 	});
