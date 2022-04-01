@@ -62,28 +62,23 @@ const main = () => {
 		}
 		catch (error) {
 			// End the response with 400.
-			response.statusCode = 400;
-			response.statusMessage = 'Bad Request';
-			if (!head) {
-				response.write('400: Bad Request');
-			}
-			return response.end();
+			return responseHandler(response, '400 Bad Request', {}, request.method);
 		}
 
 		// Remove trailing slashes from the path name.
 		query.pathname = query.pathname.replace(/^(.+)\/$/, '$1');
 
 		// CORS
-		if (request.headers.origin) {
+		if (request.headers['origin']) {
 			if (config.cors.domains.includes(
-				request.headers.origin
+				request.headers['origin']
 					.toString()
 					.replace(/^https?:\/\//, '')
 			)) {
 				// Set CORS header.
 				response.setHeader(
 					'Access-Control-Allow-Origin',
-					request.headers.origin
+					request.headers['origin']
 				);
 			}
 		}
@@ -109,12 +104,7 @@ const main = () => {
 				}
 				catch (error) {
 					// End the response with 500.
-					response.statusCode = 500;
-					response.statusMessage = 'Internal Server Error';
-					if (!head) {
-						response.write('500: Internal Server Error');
-					}
-					return response.end();
+					return responseHandler(response, '500 Internal Server Error', {}, request.method);
 				}
 
 				// Does the path name to the (file?) exists?
@@ -125,23 +115,12 @@ const main = () => {
 					// Read the file from the file system.
 					return fs.readFile(pathname, (error, data) => {
 						if (error) {
-							// End the reponse with 500.
-							response.statusCode = 500;
-							response.statusMessage = 'Internal Server Error';
-							if (!head) {
-								response.write('500: Internal Server Error');
-							}
-							return response.end();
+							// End the response with 500.
+							return responseHandler(response, '500 Internal Server Error', {}, request.method);
 						}
 
-						// End the reponse with data.
-						response.statusCode = 200;
-						response.statusMessage = 'OK';
-						response.setHeader('Content-Length', data.length);
-						if (!head) {
-							response.write(data);
-						}
-						response.end();
+						// End the response with data.
+						responseHandler(response, '200 OK', {}, request.method, data);
 					});
 				}
 
@@ -157,60 +136,49 @@ const main = () => {
 						return fs.readFile(index, (error, data) => {
 							if (error) {
 								// End the response with 500.
-								response.statusCode = 500;
-								response.statusMessage = 'Internal Server Error';
-								if (!head) {
-									response.write('500: Internal Server Error');
-								}
-								return response.end();
+								return responseHandler(response, '500 Internal Server Error', {}, request.method);
 							}
 
 							// End the response with data.
-							response.statusCode = 200;
-							response.statusMessage = 'OK';
-							response.setHeader('Content-Type', 'text/html');
-							response.setHeader('Content-Length', data.length);
-							if (!head) {
-								response.write(data);
-							}
-							response.end();
+							responseHandler(
+								response,
+								'200 OK',
+								{ 'Content-Type': 'text/html' },
+								request.method,
+								data
+							);
 						});
 					}
 
 					// Was the requested query some gibberish nonsense?
 					else {
 						// End the response with 404.
-						response.statusCode = 404;
-						response.statusMessage = 'Not Found';
-						if (!head) {
-							response.write('404: Not Found');
-						}
-						return response.end();
+						return responseHandler(response, '404 Not Found', {}, request.method);
 					}
 				}
 			}
 
 			else if (request.method === 'OPTIONS') {
 				// End the response with 200.
-				response.statusCode = 200;
-				response.statusMessage = 'OK';
-				response.setHeader('Allow', config.methods.join(', '));
-				return response.end('200: OK');
+				return responseHandler(
+					response,
+					'200 OK',
+					{ 'Allow': config.methods.join(', ') },
+					request.method
+				);
 			}
 		}
 
 		// Unsupported request method?
 		else {
 			// End the response with 501.
-			response.statusCode = 501;
-			response.statusMessage = 'Not Implemented';
-			return response.end('501: Not Implemented');
+			return responseHandler(response, '501 Not Implemented', {}, request.method);
 		}
 
 		// Define an object literal with timeouts.
 		let timeouts = {
 			development: config.devServer.timeout,
-			production: conifg.server.timeout
+			production: config.server.timeout
 		};
 
 		// Make up a timeout to use.
@@ -221,12 +189,7 @@ const main = () => {
 		// and/or something else.
 		response.setTimeout(timeout, () => {
 			// End the response with 500.
-			response.statusCode = 500;
-			response.statusMessage = 'Internal Server Error';
-			if (!head) {
-				response.write('500: Internal Server Error');
-			}
-			response.end();
+			responseHandler(response, '500 Internal Server Error', {}, request.method);
 		});
 	});
 
@@ -245,6 +208,35 @@ const main = () => {
 		console.clear();
 		console.log(`HTTP server running at http://127.0.0.1:${port}\n`);
 	});
+};
+
+// Ends responses (#1)
+const responseHandler = (response, status = '200 OK', headers = {}, method = 'GET', body) => {
+
+	// Response object validation
+	if (typeof(response) === 'object') {
+
+		// Parse the status string + assignment.
+		response.statusCode = parseInt(status.substring(0, 3));
+		response.statusMessage = status.substring(4);
+
+		// Loop over and set headers.
+		for (const [ key, value ] of Object.entries(headers)) {
+			response.setHeader(key, value);
+		}
+
+		// Define the response chunk.
+		let chunk = body ?? status;
+		response.setHeader('Content-Length', chunk.length);
+
+		// Write the chunk if applicable.
+		if (method !== 'HEAD') {
+			response.write(chunk);
+		}
+
+		// End the response.
+		return response.end();
+	}
 };
 
 try /*one's luck*/ {
