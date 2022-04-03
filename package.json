@@ -26,6 +26,7 @@
 		"fs": "^0.0.1-security",
 		"http": "^0.0.1-security",
 		"path": "^0.12.7",
+		"response-handler": "file:lib/response-handler",
 		"sanitiser": "^0.0.2",
 		"url": "^0.11.0"
 	}
