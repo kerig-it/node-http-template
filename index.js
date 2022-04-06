@@ -127,14 +127,7 @@ const main = () => {
 				let
 					// Define an index file.
 					index = path.join(pathname, 'index.html'),
-					file;
-
-				for (const item of [ index, pathname ]) {
-					if (fs.existsSync(item)) {
-						file = item;
-						break;
-					}
-				}
+					file  = [ index, pathname ].find(fs.existsSync);
 
 				// Do the path name or index file exist?
 				if (file && fs.statSync(file).isFile()) {
