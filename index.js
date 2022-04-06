@@ -14,7 +14,6 @@ const
 	fs = require('fs'),
 	http = require('http'),
 	path = require('path'),
-	responseHandler = require('response-handler'),
 	sanitiser = require('sanitiser'),
 	url = require('url');
 
@@ -46,11 +45,22 @@ catch (error) {
 	throw error;
 }
 
+// Returns a status string from a response.
+const status = response => {
+	if (!response)
+		return;
+
+	if (!response.statusMessage)
+		response.writeHead(200);
+
+	return `${response.statusCode} ${response.statusMessage}`;
+};
+
 // Main function
 const main = () => {
 
 	// Define an HTTP server.
-	let server = http.createServer((request, response) => {
+	let server = http.createServer(async (request, response) => {
 
 		// Define a Boolean value of whether the HEAD method is used.
 		let head = request.method === 'HEAD';
@@ -62,24 +72,28 @@ const main = () => {
 			query = url.parse(request.url, true, false);
 		}
 		catch (error) {
-			// End the response with 400.
-			return responseHandler(response, '400 Bad Request', {}, request.method);
+			// End the response with 400 Bad Request.
+			return response
+				.writeHead(400)
+				.end(!head && status(response));
 		}
 
 		// Remove trailing slashes from the path name.
 		query.pathname = query.pathname.replace(/^(.+)\/$/, '$1');
 
 		// CORS
-		if (request.headers['origin']) {
+		let origin = request.headers['origin'];
+
+		if (origin) {
 			if (config.cors.domains.includes(
-				request.headers['origin']
+				origin
 					.toString()
 					.replace(/^https?:\/\//, '')
 			)) {
-				// Set CORS header.
+				// Set Allow-Origin header (CORS).
 				response.setHeader(
 					'Access-Control-Allow-Origin',
-					request.headers['origin']
+					origin
 				);
 			}
 		}
@@ -95,85 +109,95 @@ const main = () => {
 				let pathname;
 
 				try {
+					// File from client directory
 					pathname = path.join(
-						// Path name to client directory
 						config.client.dir,
-
-						// Sanitised requested path
 						sanitiser(query.pathname).replace(/^\/*/, '')
 					);
 				}
 				catch (error) {
-					// End the response with 500.
-					return responseHandler(response, '500 Internal Server Error', {}, request.method);
+					// End the response with 500 Internal Server Error.
+					return response
+						.writeHead(500)
+						.end(!head && status(response));
 				}
 
-				// Does the path name to the (file?) exists?
+				// Does the file (?) exists?
 				if (
 					fs.existsSync(pathname) &&
 					fs.statSync(pathname).isFile()
 				) {
-					// Read the file from the file system.
-					return fs.readFile(pathname, (error, data) => {
-						if (error) {
-							// End the response with 500.
-							return responseHandler(response, '500 Internal Server Error', {}, request.method);
-						}
+					try {
+						const chunk = await fs.promises.readFile(pathname);
 
-						// End the response with data.
-						responseHandler(response, '200 OK', {}, request.method, data);
-					});
+						// End the response with the chunk.
+						return response
+							.writeHead(200, {
+								'Content-Length': Buffer.byteLength(chunk)
+							})
+							.end(!head && chunk);
+					}
+					catch (error) {
+						// End the response with 500 Internal Server Error.
+						return response
+							.writeHead(500)
+							.end(!head && status(response));
+					}
 				}
 
 				// Not a direct specification of a file?
 				else {
 
-					// Define a possible index.html file.
-					let index = path.join(pathname, 'index.html');
+					// Append an index file.
+					pathname = path.join(pathname, 'index.html');
 
 					// Does the index file exist?
-					if (fs.existsSync(index)) {
-						// Read the index file.
-						return fs.readFile(index, (error, data) => {
-							if (error) {
-								// End the response with 500.
-								return responseHandler(response, '500 Internal Server Error', {}, request.method);
-							}
+					if (fs.existsSync(pathname)) {
+						try {
+							const chunk = await fs.promises.readFile(pathname);
 
-							// End the response with data.
-							responseHandler(
-								response,
-								'200 OK',
-								{ 'Content-Type': 'text/html' },
-								request.method,
-								data
-							);
-						});
+							// End the response with the chunk.
+							return response
+								.writeHead(200, {
+									'Content-Length': Buffer.byteLength(chunk),
+									'Content-Type': 'text/html'
+								})
+								.end(!head && chunk);
+						}
+						catch (error) {
+							// End the response with 500 Internal Server Error.
+							return response
+								.writeHead(500)
+								.end(!head && status(response));
+						}
 					}
 
 					// Was the requested query some gibberish nonsense?
 					else {
-						// End the response with 404.
-						return responseHandler(response, '404 Not Found', {}, request.method);
+						// End the response with 404 Not Found.
+						return response
+							.writeHead(404)
+							.end(!head && status(response));
 					}
 				}
 			}
 
 			else if (request.method === 'OPTIONS') {
-				// End the response with 200.
-				return responseHandler(
-					response,
-					'200 OK',
-					{ 'Allow': config.methods.join(', ') },
-					request.method
-				);
+				// End the response with the allowed options.
+				return response
+					.writeHead(200, {
+						'Allow': config.methods.join(', ')
+					})
+					.end(status(response));
 			}
 		}
 
 		// Unsupported request method?
 		else {
-			// End the response with 501.
-			return responseHandler(response, '501 Not Implemented', {}, request.method);
+			// End the response with 501 Not Implemented
+			return response
+				.writeHead(501)
+				.end(status(response));
 		}
 
 		// Define an object literal with timeouts.
