@@ -1,5 +1,5 @@
 /*
- * node-http-template—A template repository for Node.js HTTP servers.
+ * This is the entry point of the Node application.
  *
  * Refer to the README in this repository's root for more
  * information.
@@ -59,14 +59,12 @@ const status = response => {
 // Main function
 const main = () => {
 
-	// Define an HTTP server.
-	let server = http.createServer(async (request, response) => {
-
-		// Define a Boolean value of whether the HEAD method is used.
-		let head = request.method === 'HEAD';
-
-		// Declare a query.
-		let query;
+	// HTTP server listener
+	const server = async (request, response) => {
+		let
+			// Boolean value of the HEAD method utilisation
+			head = request.method === 'HEAD',
+			query;
 
 		try {
 			query = url.parse(request.url, true, false);
@@ -78,17 +76,23 @@ const main = () => {
 				.end(!head && status(response));
 		}
 
-		// Remove trailing slashes from the path name.
-		query.pathname = query.pathname.replace(/^(.+)\/$/, '$1');
+		// No path name supplied?
+		if (!query.pathname || typeof(query.pathname) !== 'string') {
+			query.pathname = '/';
+		}
+		else {
+			// Path name sanitisation.
+			query.pathname = sanitiser(query.pathname, {
+				trailingSlashes: false
+			});
+		}
 
 		// CORS
 		let origin = request.headers['origin'];
 
-		if (origin) {
+		if (origin && typeof(origin) === 'string') {
 			if (config.cors.domains.includes(
-				origin
-					.toString()
-					.replace(/^https?:\/\//, '')
+				origin.replace(/^https?:\/\//, '')
 			)) {
 				// Set Allow-Origin header (CORS).
 				response.setHeader(
@@ -100,8 +104,6 @@ const main = () => {
 
 		// Is the request method supported?
 		if (config.methods.includes(request.method)) {
-
-			// Request handling
 			if ([ 'GET', 'HEAD' ].includes(request.method)) {
 
 				// Declare a path name that will be a composed
@@ -112,7 +114,7 @@ const main = () => {
 					// File from client directory
 					pathname = path.join(
 						config.client.dir,
-						sanitiser(query.pathname).replace(/^\/*/, '')
+						query.pathname.replace(/^\/*/, '')
 					);
 				}
 				catch (error) {
@@ -122,15 +124,26 @@ const main = () => {
 						.end(!head && status(response));
 				}
 
-				// Does the file (?) exists?
-				if (
-					fs.existsSync(pathname) &&
-					fs.statSync(pathname).isFile()
-				) {
-					try {
-						const chunk = await fs.promises.readFile(pathname);
+				let
+					// Define an index file.
+					index = path.join(pathname, 'index.html'),
+					file;
 
-						// End the response with the chunk.
+				if (fs.existsSync(index))
+					file = index;
+				else if (fs.existsSync(pathname))
+					file = pathname;
+
+				// Do the path name or index file exist?
+				if (file && fs.statSync(file).isFile()) {
+					try {
+						const chunk = await fs.promises.readFile(file);
+						
+						// Set a Content-Type head if necessary.
+						if (file === index)
+							response.setHeader('Content-Type', 'text/html');
+
+						// End the response with data.
 						return response
 							.writeHead(200, {
 								'Content-Length': Buffer.byteLength(chunk)
@@ -145,40 +158,12 @@ const main = () => {
 					}
 				}
 
-				// Not a direct specification of a file?
+				// Was the requested query some gibberish nonsense?
 				else {
-
-					// Append an index file.
-					pathname = path.join(pathname, 'index.html');
-
-					// Does the index file exist?
-					if (fs.existsSync(pathname)) {
-						try {
-							const chunk = await fs.promises.readFile(pathname);
-
-							// End the response with the chunk.
-							return response
-								.writeHead(200, {
-									'Content-Length': Buffer.byteLength(chunk),
-									'Content-Type': 'text/html'
-								})
-								.end(!head && chunk);
-						}
-						catch (error) {
-							// End the response with 500 Internal Server Error.
-							return response
-								.writeHead(500)
-								.end(!head && status(response));
-						}
-					}
-
-					// Was the requested query some gibberish nonsense?
-					else {
-						// End the response with 404 Not Found.
-						return response
-							.writeHead(404)
-							.end(!head && status(response));
-					}
+					// End the response with 404 Not Found.
+					return response
+						.writeHead(404)
+						.end(!head && status(response));
 				}
 			}
 
@@ -213,10 +198,12 @@ const main = () => {
 		// due to the server not handling a particular request method
 		// and/or something else.
 		response.setTimeout(timeout, () => {
-			// End the response with 500.
-			responseHandler(response, '500 Internal Server Error', {}, request.method);
+			// End the response with 500 Internal Server Error.
+			return response
+				.writeHead(500)
+				.end(status(message));
 		});
-	});
+	};
 
 	// Define an object literal with ports.
 	let ports = {
@@ -228,7 +215,7 @@ const main = () => {
 	let port = ports[config.environment] ?? 80;
 
 	// Initiate the HTTP server.
-	server.listen(port, () => {
+	http.createServer(server).listen(port, () => {
 		// Print success message.
 		console.clear();
 		console.log(`HTTP server running at http://127.0.0.1:${port}\n`);
