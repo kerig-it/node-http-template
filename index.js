@@ -129,17 +129,19 @@ const main = () => {
 					index = path.join(pathname, 'index.html'),
 					file;
 
-				if (fs.existsSync(index))
-					file = index;
-				else if (fs.existsSync(pathname))
-					file = pathname;
+				for (const item of [ index, pathname ]) {
+					if (fs.existsSync(item)) {
+						file = item;
+						break;
+					}
+				}
 
 				// Do the path name or index file exist?
 				if (file && fs.statSync(file).isFile()) {
 					try {
 						const chunk = await fs.promises.readFile(file);
-						
-						// Set a Content-Type head if necessary.
+
+						// Set a Content-Type header if necessary.
 						if (file === index)
 							response.setHeader('Content-Type', 'text/html');
 
