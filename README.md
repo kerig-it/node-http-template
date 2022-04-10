@@ -5,8 +5,8 @@
 <h1 align="center">
 	<span>Node HTTP Template</span><br />
 	<!-- Workflow files/badges -->
-	<a href="">
-		<img alt="" src="" />
+	<a href="https://github.com/kerig-it/node-http-template/actions/workflows/codeql-analysis.yml">
+		<img alt="CodeQL analysis" src="https://github.com/kerig-it/node-http-template/actions/workflows/codeql-analysis.yml/badge.svg" />
 	</a>
 </h1>
 
@@ -101,6 +101,12 @@ There are several things you can configure to alter the server's behaviour by ch
 				</table></td>
 				<td>Defines a list of whitelisted domain names for CORS header assignment.</td>
 			</tr>
+			<tr>
+				<td><code>enabled</code></td>
+				<td>Boolean</td>
+				<td><code>true</code></td>
+				<td>Defines whether the server should perform any CORS management.</td>
+			</tr>
 		</table></td>
 		<td>Holds properties about CORS management.</td>
 	</tr>
@@ -177,7 +183,7 @@ There are several things you can configure to alter the server's behaviour by ch
 			<tr>
 				<td><code>timeout</code></td>
 				<td>Number</td>
-				<td><code>450000</code></td>
+				<td><code>60000</code></td>
 				<td>Defines a timeout in milliseconds after which the server will automatically end the response with the <code>500 Internal Server Error</code> status.</td>
 			</tr>
 		</table></td>
