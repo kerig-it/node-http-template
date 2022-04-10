@@ -5,7 +5,7 @@
 FROM node:17.8.0-alpine3.15
 
 # Set the shell used by Docker to Bash.
-SHELL [ '/bin/bash', '-c' ]
+SHELL [ "/bin/bash", "-c" ]
 
 # Set a working directory (practically this is the directory where the
 # server will end up in the container).
@@ -31,4 +31,4 @@ RUN chmod +x configure && ./configure
 EXPOSE 80/tcp
 
 # Specify a command to run when the container is initiated.
-CMD [ 'node', 'index.js' ]
+CMD [ "node", "index.js" ]
