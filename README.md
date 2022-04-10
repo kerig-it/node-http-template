@@ -5,17 +5,17 @@
 <h1 align="center">
 	<span>Node HTTP Template</span><br />
 	<!-- Workflow files/badges -->
-	<a href="">
-		<img alt="" src="" />
+	<a href="https://github.com/kerig-it/node-http-template/actions/workflows/codeql-analysis.yml">
+		<img alt="CodeQL analysis" src="https://github.com/kerig-it/node-http-template/actions/workflows/codeql-analysis.yml/badge.svg" />
 	</a>
 </h1>
 
 > :bulb: **Tip**<br />
-> This is a template repository. You can use it by clicking the "Use this template" button on our GitHub repository or by specifying the `--template kerig-it/node-http-template` option when creating the repository [using the GitHub CLI](https://cli.github.com/manual/gh_repo_create).
+> This is a repository is a boilerplate. You can use it by clicking the "Use this template" button on our GitHub repository or by specifying the `--template kerig-it/node-http-template` option when creating a repository [using the GitHub CLI](https://cli.github.com/manual/gh_repo_create).
 
 ## Synopsis
 
-This repository is a small HTTP web server written in Node.js that you can use to serve your client with minimal configuration.
+This repository is a small HTTP web server boilerplate written in Node.js that you can use to serve your client with minimal configuration.
 
 <table/>
 	<tr>
@@ -101,6 +101,12 @@ There are several things you can configure to alter the server's behaviour by ch
 				</table></td>
 				<td>Defines a list of whitelisted domain names for CORS header assignment.</td>
 			</tr>
+			<tr>
+				<td><code>enabled</code></td>
+				<td>Boolean</td>
+				<td><code>true</code></td>
+				<td>Defines whether the server should perform any CORS management.</td>
+			</tr>
 		</table></td>
 		<td>Holds properties about CORS management.</td>
 	</tr>
@@ -119,6 +125,12 @@ There are several things you can configure to alter the server's behaviour by ch
 				<td>Number</td>
 				<td><code>8080</code></td>
 				<td>Defines a port that the server will listen on if the <code>environment</code> property is set to <code>development</code>.</td>
+			</tr>
+			<tr>
+				<td><code>timeout</code></td>
+				<td>Number</td>
+				<td><code>60000</code></td>
+				<td>Defines a timeout in milliseconds after which the server will automatically end the response with the <code>500 Internal Server Error</code> status.</td>
 			</tr>
 		</table></td>
 		<td>Holds properties about the development server.</td>
@@ -150,7 +162,7 @@ There are several things you can configure to alter the server's behaviour by ch
 					<td>String</td>
 				</tr>
 			</table></td>
-		<td>Defines a list of HTTP methods that the server will not reject with a <code>405 Method Not Allowed</code> status.</td>
+		<td>Defines a list of HTTP methods that the server will not reject with a <code>501 Not Implemented</code> status.</td>
 	</tr>
 	<tr>
 		<td><code>server</code></td>
@@ -168,20 +180,20 @@ There are several things you can configure to alter the server's behaviour by ch
 				<td><code>80</code></td>
 				<td>Defines a port that the server will listen on if the <code>environment</code> property is set to <code>production</code>.</td>
 			</tr>
+			<tr>
+				<td><code>timeout</code></td>
+				<td>Number</td>
+				<td><code>60000</code></td>
+				<td>Defines a timeout in milliseconds after which the server will automatically end the response with the <code>500 Internal Server Error</code> status.</td>
+			</tr>
 		</table></td>
 		<td>Holds properties about the production server.</td>
-	</tr>
-	<tr>
-		<td><code>timeout</code></td>
-		<td>Number</td>
-		<td><code>5000</code></td>
-		<td>Defines a timeout in milliseconds after which the server will automatically end the response with the <code>408 Request Timeout</code> status.</td>
 	</tr>
 </table>
 
 ## Support
 
-Ran into problems or have questions? Don't hesitate to get in touch with us by either sending an e-mail to one of this repository contributors or organisation members, [filing an issue](https://github.com/kerig-it/node-tmpl/issues/new/choose) on our GitHub repository or [opening a discussion](https://github.com/kerig-it/node-tmpl/discussions/new).
+Ran into problems or have questions? Don't hesitate to get in touch with us by either sending an e-mail to one of this repository contributors or organisation members, [filing an issue](https://github.com/kerig-it/node-http-template/issues/new/choose) on our GitHub repository or [opening a discussion](https://github.com/kerig-it/node-http-template/discussions/new).
 
 If you want to send an e-mail, you can choose from one of the below e-mail addresses:
 
