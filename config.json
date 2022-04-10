@@ -6,7 +6,8 @@
 		"domains": [
 			"127.0.0.1",
 			"localhost"
-		]
+		],
+		"enabled": true
 	},
 	"devServer": {
 		"port": 8080,
@@ -20,6 +21,6 @@
 	],
 	"server": {
 		"port": 80,
-		"timeout": 450000
+		"timeout": 60000
 	}
 }
