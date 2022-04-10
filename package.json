@@ -1,7 +1,7 @@
 {
 	"name": "http-template",
 	"version": "0.0.0-alpha.0",
-	"description": "A template repository for Node.js HTTP servers.",
+	"description": "HTTP web server boilerplate for Node.js.",
 	"main": "./index.js",
 	"scripts": {
 		"start": "nodemon index.js --ignore '*.json'",
