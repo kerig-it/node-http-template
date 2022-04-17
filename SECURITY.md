@@ -16,7 +16,7 @@ In general, any pre-release will cease support for security updates as soon as i
 
 You can report a security vulnerability in one way, and that is **NOT** by filing an issue on our GitHub repository. To report a security vulnerability, send an e-mail to one of this repository contributors or members of the Kerig organisation. You can choose from one of the below e-mail addresses:
 
- - <msfninja@pm.me> ([@msfninja](https://github.com/msfninja), contributor)
+ - <msfninja@proton.me> ([@msfninja](https://github.com/msfninja), contributor)
  - <sosa@ctemplar.com> ([@milkoholic](https://github.com/milkoholic), member)
 
 You can also send an e-mail to our organisation's e-mail address—<kerigit@outlook.com>.

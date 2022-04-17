@@ -197,8 +197,8 @@ Ran into problems or have questions? Don't hesitate to get in touch with us by e
 
 If you want to send an e-mail, you can choose from one of the below e-mail addresses:
 
- - <msfninja@pm.me> ([@msfninja](https://github.com/msfninja), contributor)
+ - <msfninja@proton.me> ([@msfninja](https://github.com/msfninja), contributor)
  - <sosa@ctemplar.com> ([@milkoholic](https://github.com/milkoholic), member)
 
 > :bulb: **Tip**<br />
-> You can also join our `#kerig` channel on [irc.libera.chat](https://libera.chat) or [chat.freenode.net](https://freenode.net)!
+> You can also join our `#kerig` channel on [irc.libera.chat](https://libera.chat) or [irc.freenode.net](https://freenode.net)!
