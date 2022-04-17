@@ -12,28 +12,27 @@
  * Made with ❤️ by Kerig.
 */
 
-// Packages and libraries
+// Dependencies
 const
 	fs = require('fs'),
 	http = require('http'),
 	path = require('path'),
-	sanitiser = require('sanitiser'),
-	url = require('url');
+	sanitiser = require('sanitiser');
 
 let config; // Configuration object --> ./config.json
 
 try {
-	// Parse the configuration object.
+	// Parse configuration object.
 	config = JSON.parse(fs.readFileSync(
 		path.join(__dirname, 'config.json')
 	).toString());
 
-	// Check if this server has a client.
+	// Does this server have a client?
 	if (config.client) {
-		// Resolve the specified client directory in the file system.
+		// Resolve client directory on file system.
 		let client = path.resolve(config.client.dir);
 
-		// Check if the client directory doesn't exist.
+		// Does the client directory not exist?
 		if (!(
 			fs.existsSync(client) &&
 			fs.statSync(client).isDirectory()
@@ -50,12 +49,13 @@ catch (error) {
 // Returns a status string from the response object.
 const status = response => {
 	if (!response)
-		return;
+		// Default
+		return '200 OK';
 
 	if (!response.statusMessage)
 		response.writeHead(200);
 
-	// Return a string with the status (default: '200 OK').
+	// Return a string with the status.
 	return `${response.statusCode} ${response.statusMessage}`;
 };
 
@@ -68,7 +68,12 @@ const main = async (request, response) => {
 
 	try {
 		// Parse the request query object.
-		query = url.parse(request.url, true, false);
+		query = new URL(request.url, `http://${request.headers.host}`);
+
+		// Validate supplied path name.
+		query.pathname = !query.pathname ? '/' : sanitiser(query.pathname, {
+			trailingSlashes: false
+		});
 	}
 	catch (error) {
 		// End the response with 400 Bad Request.
@@ -77,26 +82,16 @@ const main = async (request, response) => {
 			.end(!head && status(response));
 	}
 
-	// Validate the query path name.
-	if (!query.pathname || typeof(query.pathname) !== 'string') {
-		query.pathname = '/';
-	}
-	else {
-		// Path name sanitisation.
-		query.pathname = sanitiser(query.pathname, {
-			trailingSlashes: false
-		});
-	}
-
 	// CORS
 	if (config.cors.enabled) {
 		let origin = request.headers['origin'];
 
-		if (origin && typeof(origin) === 'string') {
+		// Validate the Origin header.
+		if (typeof origin === 'string') {
 			if (config.cors.domains.includes(
 				origin.replace(
 					/^((https?):\/\/)?(\w{1,253})(:\d{1,6})?$/i,
-					'$3$4'
+					'$3'
 				)
 			)) {
 				// Set the Allow-Origin header.
@@ -114,11 +109,11 @@ const main = async (request, response) => {
 
 			// Declare a path name that will be a composed imaginary
 			// path name from the supplied query.
-			let pathname;
+			let file;
 
 			try {
 				// File from client directory
-				pathname = path.join(
+				file = path.resolve(
 					config.client.dir,
 					query.pathname.replace(/^\/*/, '')
 				);
@@ -132,17 +127,19 @@ const main = async (request, response) => {
 
 			let
 				// Define a path to an index file.
-				index = path.join(pathname, 'index.html'),
-				file  = [ index, pathname ].find(fs.existsSync);
+				index = path.resolve(file, 'index.html'),
+				target  = [ file, index ].find(item =>
+					fs.existsSync(item) && fs.statSync(item).isFile()
+				);
 
 			// Does the target file exist?
-			if (file && fs.statSync(file).isFile()) {
+			if (target && fs.statSync(target).isFile()) {
 				try {
 					// Read the target file.
-					const chunk = await fs.promises.readFile(file);
+					const chunk = await fs.promises.readFile(target);
 
 					// Set a Content-Type header if necessary.
-					if (file === index)
+					if (target === index)
 						response.setHeader('Content-Type', 'text/html');
 
 					// End the response with data.
@@ -175,7 +172,7 @@ const main = async (request, response) => {
 				.writeHead(200, {
 					'Allow': config.methods.join(', ')
 				})
-				.end(status(response));
+				.end(status());
 		}
 	}
 
