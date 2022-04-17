@@ -23,10 +23,6 @@
 	},
 	"homepage": "https://github.com/kerig-it/node-http-template#readme",
 	"dependencies": {
-		"fs": "^0.0.1-security",
-		"http": "^0.0.1-security",
-		"path": "^0.12.7",
-		"sanitiser": "^0.0.2",
-		"url": "^0.11.0"
+		"sanitiser": "^0.0.2"
 	}
 }
