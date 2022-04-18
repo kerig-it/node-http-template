@@ -6,6 +6,9 @@
  * information or to the wiki for a complete reference on tweaking
  * this server to your needs.
  *
+ * All regular expression were checked against:
+ * https://devina.io/redos-checker
+ *
  * GitHub: https://github.com/kerig-it/node-http-template
  * Wiki:   https://github.com/kerig-it/node-http-template/wiki
  *
@@ -30,20 +33,29 @@ try {
 	// Does this server have a client?
 	if (config.client) {
 		// Resolve client directory on file system.
-		let client = path.resolve(config.client.dir);
+		let client = path.resolve(config.client?.dir);
 
 		// Does the client directory not exist?
 		if (!(
 			fs.existsSync(client) &&
 			fs.statSync(client).isDirectory()
 		)) {
-			throw new Error('The client directory is seemingly devoid.');
+			// Unsupport HTTP methods GET and HEAD.
+			config.methods = config.methods.filter(method =>
+				![ 'GET', 'HEAD' ].includes(method)
+			);
+
+			// Raise an error.
+			throw new Error('The client directory is seemingly devoid. HTTP methods GET and HEAD will be dismissed.');
 		}
+
+		// Assign absolute path.
+		config.client.dir = client;
 	}
 }
 catch (error) {
-	// Crash the server.
-	throw error;
+	// Log errors.
+	console.warn('An error arose ante server initiation:\n%O\n', error);
 }
 
 // Returns a status string from the response object.
@@ -55,7 +67,6 @@ const status = response => {
 	if (!response.statusMessage)
 		response.writeHead(200);
 
-	// Return a string with the status.
 	return `${response.statusCode} ${response.statusMessage}`;
 };
 
@@ -67,11 +78,12 @@ const main = async (request, response) => {
 		query;
 
 	try {
-		// Parse the request query object.
+		// Parse the request query URL.
 		query = new URL(request.url, `http://${request.headers.host}`);
 
 		// Validate supplied path name.
-		query.pathname = !query.pathname ? '/' : sanitiser(query.pathname, {
+		query.pathname = sanitiser(query.pathname, {
+			path: true,
 			trailingSlashes: false
 		});
 	}
@@ -82,16 +94,17 @@ const main = async (request, response) => {
 			.end(!head && status(response));
 	}
 
-	// CORS
-	if (config.cors.enabled) {
+	// Is CORS enabled?
+	if (config.cors?.enabled) {
 		let origin = request.headers['origin'];
 
 		// Validate the Origin header.
 		if (typeof origin === 'string') {
 			if (config.cors.domains.includes(
 				origin.replace(
-					/^((https?):\/\/)?(\w{1,253})(:\d{1,6})?$/i,
-					'$3'
+					//               (host name      )  (port   )
+					/(https?:)?\/?\/?([\w\-\.]{1,253}):?(\d{1,6})?/i,
+					'$2' // Second group matches the host name
 				)
 			)) {
 				// Set the Allow-Origin header.
@@ -107,28 +120,16 @@ const main = async (request, response) => {
 	if (config.methods.includes(request.method)) {
 		if ([ 'GET', 'HEAD' ].includes(request.method)) {
 
-			// Declare a path name that will be a composed imaginary
-			// path name from the supplied query.
-			let file;
-
-			try {
-				// File from client directory
-				file = path.resolve(
+			// Paths to resources/index files
+			let
+				resource = path.join(
 					config.client.dir,
 					query.pathname.replace(/^\/*/, '')
-				);
-			}
-			catch (error) {
-				// End the response with 500 Internal Server Error.
-				return response
-					.writeHead(500)
-					.end(!head && status(response));
-			}
+				),
+				index = path.join(resource, 'index.html'),
 
-			let
-				// Define a path to an index file.
-				index = path.resolve(file, 'index.html'),
-				target  = [ file, index ].find(item =>
+				// One of the two
+				target  = [ resource, index ].find(item =>
 					fs.existsSync(item) && fs.statSync(item).isFile()
 				);
 
@@ -216,11 +217,11 @@ try {
 	// Initiate the HTTP server.
 	http.createServer(main).listen(port, () => {
 		// Print success message.
-		console.clear();
-		console.log(`HTTP server running at http://127.0.0.1:${port}\n`);
+		console.log('HTTP server running at http://127.0.0.1:%d\n', port);
 	});
 }
 catch (error) {
-	// Crash the server.
-	throw error;
+	// Log errors.
+	console.error('An error arose per server initiation:\n%O\n', error);
+	process.exit(1);
 }
