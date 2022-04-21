@@ -11,7 +11,7 @@
 </h1>
 
 > :bulb: **Tip**<br />
-> This is a repository is a boilerplate. You can use it by clicking the "Use this template" button on our GitHub repository or by specifying the `--template kerig-it/node-http-template` option when creating a repository [using the GitHub CLI](https://cli.github.com/manual/gh_repo_create).
+> This repository is a boilerplate. You can use it by clicking the "Use this template" button on our GitHub repository or by specifying the `--template kerig-it/node-http-template` option when creating a repository [using the GitHub CLI](https://cli.github.com/manual/gh_repo_create).
 
 ## Synopsis
 
