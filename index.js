@@ -127,9 +127,10 @@ const main = async (request, response) => {
 					query.pathname.replace(/^\/*/, '')
 				),
 				index = path.join(resource, 'index.html'),
+				root = path.join(config.client.dir, 'index.html');
 
 				// One of the two
-				target  = [ resource, index ].find(item =>
+				target  = [ resource, index, root ].find(item =>
 					fs.existsSync(item) && fs.statSync(item).isFile()
 				);
 
