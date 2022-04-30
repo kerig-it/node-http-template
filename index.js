@@ -140,9 +140,14 @@ const main = async (request, response) => {
 					// Read the target file.
 					const chunk = await fs.promises.readFile(target);
 
-					// Set a Content-Type header if necessary.
 					if (target === index)
+						// Set a Content-Type header.
 						response.setHeader('Content-Type', 'text/html');
+
+					else if (target === root)
+						// Set an X-File-Type header to indicate this
+						// is the root index file.
+						response.setHeader('X-File-Type', 'root');
 
 					// End the response with data.
 					return response
