@@ -126,16 +126,15 @@ const main = async (request, response) => {
 					config.client.dir,
 					query.pathname.replace(/^\/*/, '')
 				),
-				index = path.join(resource, 'index.html'),
-				root = path.join(config.client.dir, 'index.html');
+				index = path.join(resource, 'index.html');
 
 				// One of the two
-				target  = [ resource, index, root ].find(item =>
+				target  = [ resource, index ].find(item =>
 					fs.existsSync(item) && fs.statSync(item).isFile()
 				);
 
 			// Does the target file exist?
-			if (target && fs.statSync(target).isFile()) {
+			if (target) {
 				try {
 					// Read the target file.
 					const chunk = await fs.promises.readFile(target);
@@ -143,11 +142,6 @@ const main = async (request, response) => {
 					if (target === index)
 						// Set a Content-Type header.
 						response.setHeader('Content-Type', 'text/html');
-
-					else if (target === root)
-						// Set an X-File-Type header to indicate this
-						// is the root index file.
-						response.setHeader('X-File-Type', 'root');
 
 					// End the response with data.
 					return response
